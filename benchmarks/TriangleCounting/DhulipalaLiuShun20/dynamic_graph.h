@@ -664,6 +664,19 @@ namespace DBTGraph{
 
         }
 
+        size_t debugging_temp(){
+            uintE u = 105;
+            uintE v = 479;
+            // if(is_low_v(u) && is_low_v(v)) return 0;
+            tuple<size_t, size_t, size_t> ct = make_tuple(0,0,0);
+            // if(is_high_v(u) && is_high_v(v)){
+            if(use_block_v(u) || use_block_v(v)) cout << "use block!" << endl;
+                SetT *L = HL->find(u, NULL);
+                if(L!=NULL) ct = countTrianglesHelperDebug(L,u,v,0,true);
+            // }
+            cout << " count: " << get<0>(ct) << endl;
+            return get<0>(ct);
+        }
         /////////////////////////////// CLEANUP TABLES /////////////////////////////////
         void packEdgeArrayDeletions(DBTGraph::VtxUpdate &u, size_t e){
             size_t offset = block_size * u.id;

@@ -98,6 +98,7 @@ inline tuple<size_t, bool, DSymGraph *> Dynamic_Triangle_Helper(DBTGraph::DyGrap
 
 DBTGraph::WTV wedges = DG->T->find(EdgeT(105,479), DBTGraph::WTV(EMPTYWTV));
 cout << wedges.c1 << endl;
+DG->debugging_temp();
 
   // t.start(); //step 4 and 5 update insertions  and deletions
   // loop over the low degree vertices w, process if the other is high
@@ -109,6 +110,8 @@ cout << wedges.c1 << endl;
 
 wedges = DG->T->find(EdgeT(105,479), DBTGraph::WTV(EMPTYWTV));
 cout << wedges.c1 << endl;
+DG->debugging_temp();
+
   // t.start(); //step 6. count triangles 
   DBTGraph::TriangleCounts tc = DBTGraph::TriangleCounts();
   // updates final has one copy of each edge
@@ -131,6 +134,8 @@ cout << wedges.c1 << endl;
 
 wedges = DG->T->find(EdgeT(105,479), DBTGraph::WTV(EMPTYWTV));
 cout << wedges.c1 << endl;
+DG->debugging_temp();
+
   // t.start(); //  first cleanup wedge tables, then re-mark inserts to OLD_EDGE, then remove
 #ifdef DBT_TOMB_MERGE
   par_for(0, vtxNew.size(), [&] (size_t i) { //cleanup T and delete if count is 0
@@ -150,6 +155,8 @@ cout << wedges.c1 << endl;
 
   wedges = DG->T->find(EdgeT(105,479), DBTGraph::WTV(EMPTYWTV));
 cout << wedges.c1 << endl;
+DG->debugging_temp();
+
 #endif
   par_for(0, vtxNew.size(), [&] (size_t i) { // remark inserts, must be before remove deletes
     DG->cleanUpEdgeInsertion(vtxNew[i], edges.slice(vtxNew[i].offset, vtxNew[i].insOffset()));
@@ -165,6 +172,7 @@ cout << wedges.c1 << endl;
 
   wedges = DG->T->find(EdgeT(105,479), DBTGraph::WTV(EMPTYWTV));
 cout << wedges.c1 << endl;
+DG->debugging_temp();
 
   DG->updateNumEdges(m_ins, m-m_ins);
   new_ct = C0 + delta_triangles_pos - delta_triangles_neg; 
