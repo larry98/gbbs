@@ -491,10 +491,14 @@ namespace DBTGraph{
         // for each update (w,u) where w is low and u is high
         //      for w's ngh high  v, check (u,v)
         void updateTable(DBTGraph::VtxUpdate &w, pbbs::range<pair<EdgeT,bool> *> edgesID){
+            // if(w.id == 105) cout << "line 494" << endl;
             if (is_low_v(w.id)){ // w is low 
+            // if(w.id == 105) cout << "line 496" << endl;
             par_for(0, w.degree, [&] (size_t i) { // loop over the udpate batch (w,u)
                 uintE uid = getSecond(edgesID, i);
+                // if(w.id == 105 && uid ==  9142) cout << "line 499" << endl;
                 if(is_high_v(uid)){               // proceed only when u is high
+                    // if(w.id == 105 && uid ==  9142) cout << "line 501" << endl;
                     bool flag = edgesID[i].second; // insertion or deletion
                     if(use_block_v(w.id)){           
                         updateTableArray(w ,uid, flag);
@@ -502,6 +506,7 @@ namespace DBTGraph{
                         SetT *H = LH->find(w.id, NULL);
                         par_for(0, H->size(), [&] (size_t j) {
                             uintE v = get<0>(H->table[j]);
+                            // if(w.id == 105 && uid ==  9142  && v == 479) cout << "line 509" << endl;
                             if(H->not_empty(v) && uid != v){
                                 updateTableT(uid, v, get<1>(H->table[j]), flag);}});                    
                     }
@@ -542,14 +547,20 @@ namespace DBTGraph{
 
                     // update triangle count for a wedge with val1 and val2 edges
         // flag is true if inserts, false if deletes
-        inline size_t countTrianglesHelperDebug(int val1, int val2, bool flag){
+        inline size_t countTrianglesHelperDebug(int val1, int val2, bool flag, uintE u, uintE v, uintE w){
             if(val1 == NO_EDGE || val2 == NO_EDGE) return 0;
             if(flag){// +1 new inserts
-                if(val1 == DEL_EDGE || val2 == DEL_EDGE) return 0; 
+                if(val1 == DEL_EDGE || val2 == DEL_EDGE){
+                    cout<< "ins del " << u << " " << v << " " << w << endl;
+                     return 0; 
+                }
                 // tc.increment(val1 + val2 + 1, 1);
                 return val1 + val2 + 1;
             }else{// +1 new deletions
-                if(val1 == NEW_EDGE || val2 == NEW_EDGE) return 0;
+                if(val1 == NEW_EDGE || val2 == NEW_EDGE){
+                    cout<< "del ins " << u << " " << v << " " << w << endl;
+                    return 0; 
+                }
                 // tc.decrement(val1/2 + val2 /2 + 1, 1);
                 return val1/2 + val2 /2 + 1; 
             }
@@ -565,7 +576,7 @@ namespace DBTGraph{
                 if(tb->not_empty(w) && w != v){
                     int val1 = get<1>(tb->table[i]);
                     int val2 = getEdgeVal(v,  w, v_new_degree);
-                    size_t result =  countTrianglesHelperDebug(val1, val2, flag);
+                    size_t result =  countTrianglesHelperDebug(val1, val2, flag, u, v, w);
                     // 
                     // if(u == 1071 && v == 1845){
                     //     cout << w << " " << val1 << " " << val2 << endl;
@@ -634,7 +645,7 @@ namespace DBTGraph{
                 WTV wedges = T->find(EdgeT(u.id,v.id), WTV(EMPTYWTV));
                  if(wedges.c1!=EMPTYWTV){
                     if(flag){
-                         tc.increment(1, wedges.c1);
+                         tc.increment(1, wedges.c1 - wedges.c4 - wedges.c5);
                          tc.increment(2, wedges.c2);
                          tc.increment(3, wedges.c3);
                      }else{
@@ -645,7 +656,7 @@ namespace DBTGraph{
                  }
 
                 if(flag){
-                if(get<0>(ct) != wedges.c1 || get<1>(ct) != wedges.c2 || wedges.c3 != get<2>(ct)){
+                if(get<0>(ct) != wedges.c1 - wedges.c4 - wedges.c5 || get<1>(ct) != wedges.c2 || wedges.c3 != get<2>(ct)){
                     cout << " counts wrong ins!" << endl;
                     cout << get<0>(ct) << " " << get<1>(ct) << " " << get<2>(ct) << " " << endl;
                     cout << wedges.c1 << " " << wedges.c2 << " " << wedges.c3 << " " << endl;
@@ -669,12 +680,15 @@ namespace DBTGraph{
             uintE v = 479;
             // if(is_low_v(u) && is_low_v(v)) return 0;
             tuple<size_t, size_t, size_t> ct = make_tuple(0,0,0);
+            tuple<size_t, size_t, size_t> ct2 = make_tuple(0,0,0);
             // if(is_high_v(u) && is_high_v(v)){
             if(use_block_v(u) || use_block_v(v)) cout << "use block!" << endl;
                 SetT *L = HL->find(u, NULL);
                 if(L!=NULL) ct = countTrianglesHelperDebug(L,u,v,0,true);
+                if(L!=NULL) ct2 = countTrianglesHelperDebug(L,u,v,0,false);
             // }
-            cout << " count: " << get<0>(ct) << endl;
+            cout << " count ins: " << get<0>(ct) << " " << get<1>(ct)<< " " << get<2>(ct)<< endl;
+            cout << " count del: " << get<0>(ct2) << " " << get<1>(ct2)<< " " << get<2>(ct2)<< endl;
             return get<0>(ct);
         }
         /////////////////////////////// CLEANUP TABLES /////////////////////////////////
