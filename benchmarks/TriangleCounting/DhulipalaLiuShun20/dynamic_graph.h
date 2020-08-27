@@ -540,6 +540,44 @@ namespace DBTGraph{
             });
         }
 
+                    // update triangle count for a wedge with val1 and val2 edges
+        // flag is true if inserts, false if deletes
+        inline size_t countTrianglesHelperDebug(int val1, int val2, bool flag){
+            if(val1 == NO_EDGE || val2 == NO_EDGE) return 0;
+            if(flag){// +1 new inserts
+                if(val1 == DEL_EDGE || val2 == DEL_EDGE) return 0; 
+                // tc.increment(val1 + val2 + 1, 1);
+                return val1 + val2 + 1;
+            }else{// +1 new deletions
+                if(val1 == NEW_EDGE || val2 == NEW_EDGE) return 0;
+                // tc.decrement(val1/2 + val2 /2 + 1, 1);
+                return val1/2 + val2 /2 + 1; 
+            }
+        }
+
+        // requrie: tables and edges updated
+        //tb = XX->find(u)
+        // for each ngh w of u, check if (w,v) exits. If so update tri counts
+        inline tuple<size_t, size_t, size_t> countTrianglesHelperDebug(SetT *tb, uintE u, uintE v, size_t v_new_degree, bool flag){
+            tuple<size_t, size_t, size_t> ct = make_tuple(0,0,0);
+            par_for(0, tb->size(), [&] (size_t i) {
+                uintE w = get<0>(tb->table[i]);
+                if(tb->not_empty(w) && w != v){
+                    int val1 = get<1>(tb->table[i]);
+                    int val2 = getEdgeVal(v,  w, v_new_degree);
+                    size_t result =  countTrianglesHelperDebug(val1, val2, flag);
+                    // 
+                    // if(u == 1071 && v == 1845){
+                    //     cout << w << " " << val1 << " " << val2 << endl;
+                    // }
+                    if(result == 1){pbbs::write_add(&get<0>(ct), 1);}
+                    if(result == 2){pbbs::write_add(&get<1>(ct), 1);}
+                    if(result == 3){pbbs::write_add(&get<2>(ct), 1);}
+                }
+            });
+            return ct;
+        }
+
         // requrie: tables and edges updated
         // might swap u,v, so must make a new copy when pass in
         // count the delta triangle caused by counting wedges of (u,v)
@@ -586,19 +624,40 @@ namespace DBTGraph{
                     countTrianglesHelper(H,u.id,v.id,space_v,flag, tc);
                 }
 
+                tuple<size_t, size_t, size_t> ct = make_tuple(0,0,0);
+                if(low_space > 0){ //HLH
+                    SetT *L = HL->find(u.id, NULL);
+                    ct = countTrianglesHelperDebug(L,u.id,v.id,space_v,flag);
+                }
+
                 if(u.id > v.id) swap(u,v);
                 WTV wedges = T->find(EdgeT(u.id,v.id), WTV(EMPTYWTV));
-                if(wedges.c1!=EMPTYWTV){
+                 if(wedges.c1!=EMPTYWTV){
                     if(flag){
-                        tc.increment(1, wedges.c1);
-                        tc.increment(2, wedges.c2);
-                        tc.increment(3, wedges.c3);
-                        // ct2 =  wedges.c1  +  wedges.c2 +  wedges.c3;
-                    }else{
-                        tc.decrement(1, wedges.c1 - wedges.c4 - wedges.c5);
-                        tc.decrement(2, wedges.c4);
-                        tc.decrement(3, wedges.c5);
-                    }
+                         tc.increment(1, wedges.c1);
+                         tc.increment(2, wedges.c2);
+                         tc.increment(3, wedges.c3);
+                     }else{
+                         tc.decrement(1, wedges.c1 - wedges.c4 - wedges.c5);
+                         tc.decrement(2, wedges.c4);
+                         tc.decrement(3, wedges.c5);
+                     }
+                 }
+
+                if(flag){
+                if(get<0>(ct) != wedges.c1 || get<1>(ct) != wedges.c2 || wedges.c3 != get<2>(ct)){
+                    cout << " counts wrong ins!" << endl;
+                    cout << get<0>(ct) << " " << get<1>(ct) << " " << get<2>(ct) << " " << endl;
+                    cout << wedges.c1 << " " << wedges.c2 << " " << wedges.c3 << " " << endl;
+                    cout << u.id  << " " << v.id << endl;
+                }
+                }else{
+                if(get<0>(ct) != wedges.c1 - wedges.c4 - wedges.c5 || get<1>(ct) != wedges.c4 || wedges.c5 != get<2>(ct)){
+                    cout << " counts wrong del!" << endl;
+                    cout << get<0>(ct) << " " << get<1>(ct) << " " << get<2>(ct) << " " << endl;
+                    cout << wedges.c1 << " " << wedges.c4 << " " << wedges.c5 << " " << endl;
+                    cout << u.id  << " " << v.id << endl;
+                }
                 }
 
             }
