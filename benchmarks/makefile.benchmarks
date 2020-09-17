@@ -2,19 +2,33 @@ INCLUDE_DIRS = -I$(ROOTDIR)
 
 .DEFAULT_GOAL := all
 
-all: $(ALL)
+all: $(ALL) $(addsuffix .decheck, $(ALL))
 
-LIGRA_OBJS = $(wildcard $(ROOTDIR)bin/gbbs/*.a)
-LIGRA_ENCODING_OBJS = $(wildcard $(ROOTDIR)bin/gbbs/encodings/*.a)
-PBBSLIB_OBJS = $(wildcard $(ROOTDIR)bin/pbbslib/*.a)
-PBBSLIB_STRINGS_OBJS = $(wildcard $(ROOTDIR)bin/pbbslib/strings/*.a)
+LIGRA_DECHECK_OBJS = $(wildcard $(ROOTDIR)bin/gbbs/*.decheck.a)
+LIGRA_ENCODING_DECHECK_OBJS = $(wildcard $(ROOTDIR)bin/gbbs/encodings/*.decheck.a)
+PBBSLIB_DECHECK_OBJS = $(wildcard $(ROOTDIR)bin/pbbslib/*.decheck.a)
+PBBSLIB_STRINGS_DECHECK_OBJS = $(wildcard $(ROOTDIR)bin/pbbslib/strings/*.decheck.a)
+
+ALL_DECHECK_OBJS = $(LIGRA_DECHECK_OBJS) $(LIGRA_ENCODING_DECHECK_OBJS) $(PBBSLIB_DECHECK_OBJS) $(PBBSLIB_STRINGS_DECHECK_OBJS) $(OTHER_DECHECK_OBJS)
+
+LIGRA_DECHECK_OBJS_CLEAN = $(wildcard $(ROOTDIR)bin/gbbs/*.decheck.o)
+LIGRA_ENCODING_DECHECK_OBJS_CLEAN = $(wildcard $(ROOTDIR)bin/gbbs/encodings/*.decheck.o)
+PBBSLIB_DECHECK_OBJS_CLEAN = $(wildcard $(ROOTDIR)bin/pbbslib/*.decheck.o)
+PBBSLIB_STRINGS_DECHECK_OBJS_CLEAN = $(wildcard $(ROOTDIR)bin/pbbslib/strings/*.decheck.o)
+
+ALL_DECHECK_OBJS_CLEAN = $(LIGRA_DECHECK_OBJS_CLEAN) $(LIGRA_ENCODING_DECHECK_OBJS_CLEAN) $(PBBSLIB_DECHECK_OBJS_CLEAN) $(PBBSLIB_STRINGS_DECHECK_OBJS_CLEAN) $(OTHER_DECHECK_OBJS_CLEAN)
+
+LIGRA_OBJS = $(filter-out $(LIGRA_DECHECK_OBJS),$(wildcard $(ROOTDIR)bin/gbbs/*.a))
+LIGRA_ENCODING_OBJS = $(filter-out $(LIGRA_ENCODING_DECHECK_OBJS),$(wildcard $(ROOTDIR)bin/gbbs/encodings/*.a))
+PBBSLIB_OBJS = $(filter-out $(PBBSLIB_DECHECK_OBJS),$(wildcard $(ROOTDIR)bin/pbbslib/*.a))
+PBBSLIB_STRINGS_OBJS = $(filter-out $(PBBSLIB_STRINGS_DECHECK_OBJS),$(wildcard $(ROOTDIR)bin/pbbslib/strings/*.a))
 
 ALL_OBJS = $(LIGRA_OBJS) $(LIGRA_ENCODING_OBJS) $(PBBSLIB_OBJS) $(PBBSLIB_STRINGS_OBJS) $(OTHER_OBJS)
 
-LIGRA_OBJS_CLEAN = $(wildcard $(ROOTDIR)bin/gbbs/*.o)
-LIGRA_ENCODING_OBJS_CLEAN = $(wildcard $(ROOTDIR)bin/gbbs/encodings/*.o)
-PBBSLIB_OBJS_CLEAN = $(wildcard $(ROOTDIR)bin/pbbslib/*.o)
-PBBSLIB_STRINGS_OBJS_CLEAN = $(wildcard $(ROOTDIR)bin/pbbslib/strings/*.o)
+LIGRA_OBJS_CLEAN = $(filter-out $(LIGRA_DECHECK_OBJS_CLEAN),$(wildcard $(ROOTDIR)bin/gbbs/*.o))
+LIGRA_ENCODING_OBJS_CLEAN = $(filter-out $(LIGRA_ENCODING_DECHECK_OBJS_CLEAN),$(wildcard $(ROOTDIR)bin/gbbs/encodings/*.o))
+PBBSLIB_OBJS_CLEAN = $(filter-out $(PBBSLIB_DECHECK_OBJS_CLEAN),$(wildcard $(ROOTDIR)bin/pbbslib/*.o))
+PBBSLIB_STRINGS_OBJS_CLEAN = $(filter-out $(PBBLSLIB_STRINGS_DECHECK_OBJS_CLEAN),$(wildcard $(ROOTDIR)bin/pbbslib/strings/*.o))
 
 ALL_OBJS_CLEAN = $(LIGRA_OBJS_CLEAN) $(LIGRA_ENCODING_OBJS_CLEAN) $(PBBSLIB_OBJS_CLEAN) $(PBBSLIB_STRINGS_OBJS_CLEAN) $(OTHER_OBJS_CLEAN)
 
@@ -39,7 +53,16 @@ pbbslib_strings :
 	$(CC) $(INCLUDE_DIRS) $(CFLAGS) $(PFLAGS) -o $@ $< $(LINKER_START_GROUP) $(ALL_OBJS) $(LINKER_END_GROUP) -pthread $(LFLAGS)
 #-Wl,--whole-archive -lpthread -Wl,--no-whole-archive -Wl,-S -Wl,-no-as-needed -Wl,-z,relro,-z,now -lstdc++ -fuse-ld=gold
 
+%.decheck.bc : %.cc pbbslib gbbs gbbs_encodings pbbslib_strings other
+	$(LLVM_CC) $(CFLAGS) $(PFLAGS) -DDECHECK $(INCLUDE_DIRS) $(DECHECK_INCLUDE) -c -emit-llvm -o $@ $<
+
+%.decheck.o : %.decheck.bc
+	$(LLVM_OPT) -load $(DECHECK_PASS) -decheck -O3 < $< | $(LLVM_LLC) --filetype=obj -o $@
+
+%.decheck : %.decheck.o
+	$(CC) -o $@ -Wl,--whole-archive $(DECHECK_RT) -Wl,--no-whole-archive $< $(LINKER_START_GROUP) $(ALL_DECHECK_OBJS) $(LINKER_END_GROUP) -pthread $(LFLAGS)
+
 .PHONY : clean
 
 clean :
-	rm -f *.o $(ALL) $(ALL_OBJS) $(ALL_OBJS_CLEAN)
+	rm -f *.o $(ALL) $(ALL_OBJS) $(ALL_OBJS_CLEAN) $(ALL_DECHECK_OBJS) $(ALL_DECHECK_OBJS_CLEAN)

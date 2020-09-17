@@ -62,8 +62,9 @@ CILKFLAGS = -DCILK -fcilkplus
 HGFLAGS = -DHOMEGROWN -pthread
 
 ifdef CLANG
-CC = clang++
-PFLAGS = $(CILKFLAGS)
+CC = clang-10
+PFLAGS = $(HGFLAGS)
+LFLAGS = -lstdc++ -lm
 else ifdef CILK
 CC = g++
 PFLAGS = $(CILKFLAGS)
@@ -91,3 +92,12 @@ else ifeq ($(OS), mac)
   LINKER_START_GROUP :=
   LINKER_END_GROUP :=
 endif
+
+LLVM_CC=clang-10
+LLVM_OPT=opt-9
+LLVM_LLC=llc-9
+
+DECHECK_PATH=$(ROOTDIR)/../../
+DECHECK_PASS=$(DECHECK_PATH)/build/instrumentation/libdecheck-pass.so
+DECHECK_RT=$(DECHECK_PATH)/build/runtime/libdecheck-rt.a
+DECHECK_INCLUDE=-I $(DECHECK_PATH)/include

@@ -10,16 +10,42 @@
 
 #include "parallel.h"
 
+#ifdef DECHECK
+#include <decheck/alloc.h>
+#endif
+
 #ifdef USEMALLOC
 namespace pbbs {
-inline void* my_alloc(size_t i) { return malloc(i); }
-inline void my_free(void* p) { free(p); }
+inline void* my_alloc(size_t i) { 
+  void *p = malloc(i); 
+#ifdef DECHECK
+  decheck::internal::decheck_alloc(p);
+#endif
+  return p;
+}
+inline void my_free(void* p) { 
+#ifdef DECHECK
+  decheck::internal::decheck_dealloc(p);
+#endif
+  free(p); 
+}
 }  // namespace pbbs
 #else
 #include "alloc.h"
 namespace pbbs {
-inline void* my_alloc(size_t i) { return my_mem_pool.alloc(i); }
-inline void my_free(void* p) { my_mem_pool.afree(p); }
+inline void* my_alloc(size_t i) { 
+  void *p = my_mem_pool.alloc(i); 
+#ifdef DECHECK
+  decheck::internal::decheck_alloc(p);
+#endif
+  return p;
+}
+inline void my_free(void* p) { 
+#ifdef DECHECK
+  decheck::internal::decheck_dealloc(p);
+#endif
+  my_mem_pool.afree(p); 
+}
 }  // namespace pbbs
 #endif
 

@@ -12,6 +12,10 @@
 #include <numa.h>
 #endif
 
+#ifdef DECHECK
+#include <decheck/par.h>
+#endif
+
 namespace pbbs {
 
 // EXAMPLE USE 1:
@@ -352,6 +356,25 @@ struct fork_join_scheduler {
   // Fork two thunks and wait until they both finish.
   template <typename L, typename R>
   void pardo(L left, R right, bool conservative = false) {
+#ifdef DECHECK
+    decheck::internal::decheck_state_t left_state, right_state;
+    decheck::internal::decheck_fork(&left_state, &right_state);
+    decheck::internal::decheck_reset(nullptr);
+    bool right_done = false;
+    Job right_job = [&]() {
+      decheck::internal::run_child(right, &right_state);
+      right_done = true;
+    };
+    sched->spawn(&right_job);
+    decheck::internal::run_child(left, &left_state);
+    if (sched->try_pop() != NULL)
+      decheck::internal::run_child(right, &right_state);
+    else {
+      auto finished = [&]() { return right_done; };
+      sched->wait(finished, conservative);
+    }
+    decheck::internal::decheck_join(&left_state, &right_state);
+#else
     bool right_done = false;
     Job right_job = [&]() {
       right();
@@ -365,6 +388,7 @@ struct fork_join_scheduler {
       auto finished = [&]() { return right_done; };
       sched->wait(finished, conservative);
     }
+#endif
   }
 
   template <typename F>

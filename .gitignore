@@ -4,6 +4,8 @@
 
 *.a
 *.o
+*.bc
+*.decheck
 *.dSYM
 *.DS_Store
 
