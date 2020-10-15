@@ -24,13 +24,13 @@ $(OBJDIR)%.o : %.cc
 	$(CC) $(INCLUDE_DIRS) $(CFLAGS) $(PFLAGS) -c $< -o $@
 
 $(OBJDIR)edge_map_blocked.decheck.bc : edge_map_blocked.cc $(addprefix $(OBJDIR), bridge.decheck.o)
-	$(LLVM_CC) $(INCLUDE_DIRS) $(CFLAGS) $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
+	$(LLVM_CC) $(INCLUDE_DIRS) $(CFLAGS) -O0 $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
 
 $(OBJDIR)graph_io.decheck.bc : graph_io.cc $(addprefix $(OBJDIR), io.decheck.o)
-	$(LLVM_CC) $(INCLUDE_DIRS) $(CFLAGS) $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
+	$(LLVM_CC) $(INCLUDE_DIRS) $(CFLAGS) -O0 $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
 
 $(OBJDIR)%.decheck.bc : %.cc
-	$(LLVM_CC) $(INCLUDE_DIRS) $(CFLAGS) $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
+	$(LLVM_CC) $(INCLUDE_DIRS) $(CFLAGS) -O0 $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
 
 $(OBJDIR)%.decheck.o : $(OBJDIR)%.decheck.bc
 	$(LLVM_OPT) -load $(DECHECK_PASS) -decheck -O3 < $< | $(LLVM_LLC) --filetype=obj -o $@

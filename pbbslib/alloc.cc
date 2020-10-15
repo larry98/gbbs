@@ -18,6 +18,8 @@ __mallopt __mallopt_var = __mallopt();
 #endif
 #endif
 
+#include <malloc.h>
+
 namespace pbbs {
 namespace {
 
@@ -108,6 +110,22 @@ void mem_pool::clear() {
       free(*r);
       r = buckets[i].pop();
     }
+  }
+}
+
+size_t mem_pool::get_size(void *a) {
+  void* b = sub_header(a);
+  size_t bucket = *((size_t*)b);
+  if (bucket == small_size_tag)
+    return malloc_usable_size(b);
+  else if (bucket >= num_buckets)
+    abort();
+  else {
+    size_t n = ((size_t)1) << (bucket + log_base);
+    if (n > mem_size / 64)
+      return malloc_usable_size(b);
+    else
+      return n;
   }
 }
 }  // namespace pbbs

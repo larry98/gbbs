@@ -21,10 +21,10 @@ $(OBJDIR)byte_pd_amortized.o : byte_pd_amortized.cc
 	$(CC) $(INCLUDE_DIRS) $(CFLAGS) $(PFLAGS) -c $< -o $@
 
 $(OBJDIR)byte.decheck.bc : byte.cc
-	$(LLVM_CC) $(INCLUDE_DIRS) $(CFLAGS) $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
+	$(LLVM_CC) $(INCLUDE_DIRS) $(CFLAGS) -O0 $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
 
 $(OBJDIR)byte_pd_amortized.decheck.bc : byte_pd_amortized.cc
-	$(LLVM_CC) $(INCLUDE_DIRS) $(CFLAGS) $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
+	$(LLVM_CC) $(INCLUDE_DIRS) $(CFLAGS) -O0 $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
 
 $(OBJDIR)%.decheck.o : $(OBJDIR)%.decheck.bc
 	$(LLVM_OPT) -load $(DECHECK_PASS) -decheck -O3 < $< | $(LLVM_LLC) --filetype=obj -o $@

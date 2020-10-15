@@ -15,17 +15,18 @@
 #endif
 
 #ifdef USEMALLOC
+#include <malloc.h>
 namespace pbbs {
 inline void* my_alloc(size_t i) { 
   void *p = malloc(i); 
 #ifdef DECHECK
-  decheck::internal::decheck_alloc(p);
+  decheck::internal::decheck_alloc(p, i);
 #endif
   return p;
 }
 inline void my_free(void* p) { 
 #ifdef DECHECK
-  decheck::internal::decheck_dealloc(p);
+  decheck::internal::decheck_dealloc(p, malloc_usable_size(p));
 #endif
   free(p); 
 }
@@ -36,13 +37,13 @@ namespace pbbs {
 inline void* my_alloc(size_t i) { 
   void *p = my_mem_pool.alloc(i); 
 #ifdef DECHECK
-  decheck::internal::decheck_alloc(p);
+  decheck::internal::decheck_alloc(p, i);
 #endif
   return p;
 }
 inline void my_free(void* p) { 
 #ifdef DECHECK
-  decheck::internal::decheck_dealloc(p);
+  decheck::internal::decheck_dealloc(p, my_mem_pool.get_size(p));
 #endif
   my_mem_pool.afree(p); 
 }

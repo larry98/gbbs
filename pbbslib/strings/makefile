@@ -16,7 +16,7 @@ all: $(ALL)
 	ar -rcs $@ $<
 
 ../../bin/pbbslib/strings/string_basics.decheck.bc : string_basics.cc
-	$(LLVM_CC) $(CFLAGS) $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
+	$(LLVM_CC) $(CFLAGS) -O0 $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
 
 ../../bin/pbbslib/strings/%.decheck.o : ../../bin/pbbslib/strings/%.decheck.bc
 	$(LLVM_OPT) -load $(DECHECK_PASS) -decheck -O3 < $< | $(LLVM_LLC) --filetype=obj -o $@

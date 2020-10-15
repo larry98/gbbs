@@ -39,6 +39,7 @@ struct mem_pool {
   void* alloc(size_t s);
   void afree(void* a);
   void clear();
+  size_t get_size(void *a);
 };
 
 static mem_pool my_mem_pool;

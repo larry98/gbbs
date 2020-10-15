@@ -25,16 +25,16 @@ $(OBJDIR)%.o : %.cc
 	$(CC) $(CFLAGS) $(PFLAGS) -c $< -o $@
 
 $(OBJDIR)time_operations.decheck.bc : time_operations.cc $(addprefix $(OBJDIR), get_time.decheck.o utilities.decheck.o)
-	$(LLVM_CC) $(CFLAGS) $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
+	$(LLVM_CC) $(CFLAGS) -O0 $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
 
 $(OBJDIR)utilities.decheck.bc : utilities.cc $(addprefix $(OBJDIR), parallel.decheck.o)
-	$(LLVM_CC) $(CFLAGS) $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
+	$(LLVM_CC) $(CFLAGS) -O0 $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
 
 $(OBJDIR)alloc.decheck.bc : alloc.cc $(addprefix $(OBJDIR), memory_size.decheck.o parallel.decheck.o)
-	$(LLVM_CC) $(CFLAGS) $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
+	$(LLVM_CC) $(CFLAGS) -O0 $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
 
 $(OBJDIR)%.decheck.bc : %.cc
-	$(LLVM_CC) $(CFLAGS) $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
+	$(LLVM_CC) $(CFLAGS) -O0 $(PFLAGS) -DDECHECK $(DECHECK_INCLUDE) -c -emit-llvm $< -o $@
 
 $(OBJDIR)%.decheck.o : $(OBJDIR)%.decheck.bc
 	$(LLVM_OPT) -load $(DECHECK_PASS) -decheck -O3 < $< | $(LLVM_LLC) --filetype=obj -o $@

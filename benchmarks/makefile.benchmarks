@@ -54,7 +54,7 @@ pbbslib_strings :
 #-Wl,--whole-archive -lpthread -Wl,--no-whole-archive -Wl,-S -Wl,-no-as-needed -Wl,-z,relro,-z,now -lstdc++ -fuse-ld=gold
 
 %.decheck.bc : %.cc pbbslib gbbs gbbs_encodings pbbslib_strings other
-	$(LLVM_CC) $(CFLAGS) $(PFLAGS) -DDECHECK $(INCLUDE_DIRS) $(DECHECK_INCLUDE) -c -emit-llvm -o $@ $<
+	$(LLVM_CC) $(CFLAGS) -O0 $(PFLAGS) -DDECHECK $(INCLUDE_DIRS) $(DECHECK_INCLUDE) -c -emit-llvm -o $@ $<
 
 %.decheck.o : %.decheck.bc
 	$(LLVM_OPT) -load $(DECHECK_PASS) -decheck -O3 < $< | $(LLVM_LLC) --filetype=obj -o $@
